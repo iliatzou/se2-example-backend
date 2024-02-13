@@ -1,6 +1,9 @@
 name: ci
 
-on: push
+on: 
+  push:
+    branches:
+      - main
 
 jobs:
   ci:
@@ -12,20 +15,22 @@ jobs:
         run: npm install
       - name: Run test
         run: npm test
+
   cd: 
     runs-on: ubuntu-latest
     needs: ci
-    if: github.ref == 'refs.heads.main'
-      steps:
-        - uses: appleboy/ssh-action@master
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: SSH into server and deploy
+        uses: appleboy/ssh-action@master
         with: 
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SHH_USER }}
           password: ${{ secrets.SHH_PASSWORD }}
-          port: ${{ sevrets.SHH_PORT }}
+          port: ${{ secrets.SHH_PORT }}
           script: |
             cd ~/se2/0/se2-example-backend
             git reset --hard origin/main
             git pull https://${{ secrets.CLONE_TOKEN }}@github.com/iliatzou/se2-example-backend main
-            bash -ci 'npm install'
-            bash -ci 'pm2 restart example-backend-0'
+            npm install
+            pm2 restart example-backend-0
